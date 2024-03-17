@@ -1,5 +1,7 @@
 import java.util.*;
 
+import static java.util.Collections.max;
+
 class Solver {
     static class Variable {
         List<Integer> domain;
@@ -17,7 +19,7 @@ class Solver {
         /**
          * Tries to reduce the domain of the variables associated to this constraint, using inference
          */
-        abstract void infer(/* you can add params */);
+        abstract void infer(Variable[] variables);
     }
 
     // Example implementation of the Constraint interface.
@@ -38,6 +40,125 @@ class Solver {
 
             this.var.domain = newDomain;
         }
+    }
+
+    // Ascending constraint. Every next variable is greater than the previous one.
+    static class AscendingConstraint extends Constraint {
+
+        public AscendingConstraint() {}
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length - 1; i++) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i + 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int minPreviousValue = Collections.min(currentVar.domain);
+                nextVar.domain.removeIf(value -> value <= minPreviousValue);
+            }
+            for (int i = variables.length - 1; i > 0; i--) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i - 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int maxNextValue = Collections.max(currentVar.domain);
+                nextVar.domain.removeIf(value -> value >= maxNextValue);
+            }
+        }
+    }
+
+
+    // Ascending constraint. Every next variable is greater than the previous one.
+    static class AscendingWithEqualConstraint extends Constraint {
+
+        public AscendingWithEqualConstraint() {}
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length - 1; i++) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i + 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int minPreviousValue = Collections.min(currentVar.domain);
+                nextVar.domain.removeIf(value -> value < minPreviousValue);
+            }
+            for (int i = variables.length - 1; i > 0; i--) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i - 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int maxNextValue = Collections.max(currentVar.domain);
+                nextVar.domain.removeIf(value -> value > maxNextValue);
+            }
+        }
+    }
+
+    // Ascending except 0 constraint. Every next variable is greater than the previous one.
+    static class AscendingExceptZeroConstraint extends Constraint {
+
+        public AscendingExceptZeroConstraint() {}
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length - 1; i++) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i + 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int minPreviousValue = Collections.min(currentVar.domain);
+                nextVar.domain.removeIf(value -> (value <= minPreviousValue && value != 0));
+            }
+            for (int i = variables.length - 1; i > 0; i--) {
+                Variable currentVar = variables[i];
+                Variable nextVar = variables[i - 1];
+                if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                int maxNextValue = Collections.max(currentVar.domain);
+                nextVar.domain.removeIf(value -> (value >= maxNextValue && value != 0));
+            }
+        }
+    }
+
+    // Not equal to other constraint. Every next variable is greater than the previous one.
+    static class NotOtherConstraint extends Constraint {
+
+        public NotOtherConstraint() {}
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length - 1; i++) {
+                if (variables[i].domain.size() == 1) {
+                    int index = i;
+                    for (int j = 0; j < variables.length; j++) {
+                        if (j != i) {
+                            variables[j].domain.removeIf(value -> value.equals(variables[index].domain.getFirst()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Not collide constraint. Queens don't see each other vertically, horizontally and diagonally.
+    static class NotCollideConstraint extends Constraint {
+        HashMap<Integer, int[]> map;
+        public NotCollideConstraint(HashMap<Integer, int[]> map) {
+            this.map = map;
+        }
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length; i++) {
+                if (variables[i].domain.size() == 1) {
+                    int index = i;
+                    for (int j = 0; j < variables.length; j++) {
+                        if (j != i) {
+                            variables[j].domain.removeIf(value -> collides(map.get(variables[index].domain.get(0)), map.get(value)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    static boolean collides(int[] a, int[] b) {
+        return a[0] == b[0] || a[1] == b[1] || Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
     }
 
     Variable[] variables;
@@ -91,16 +212,20 @@ class Solver {
             Variable[] nextVariables = copy(variables);
 
             //Collapse the domain of the variable to choice and infer from there
-            nextVariables[curVarIndex].domain = List.of(choice);
+            nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
             for (Constraint constraint : constraints) {
-                constraint.infer();
+                constraint.infer(nextVariables);
             }
 
             //If conflict -> a variable has empty domain -> return
+            boolean skip = false;
             for (Variable v : nextVariables) {
-                if (v.domain.isEmpty()) return;
+                if (v.domain.isEmpty()) {
+                    skip = true;
+                    break;
+                };
             }
-
+            if (skip) continue;
             solve(findAllSolutions, nextVariables, constraints);
         }
     }
