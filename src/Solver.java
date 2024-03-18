@@ -142,6 +142,10 @@ class Solver {
             this.map = map;
         }
 
+        static boolean collides(int[] a, int[] b) {
+            return a[0] == b[0] || a[1] == b[1] || Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
+        }
+
         @Override
         void infer(Variable[] variables) {
             for (int i = 0; i < variables.length; i++) {
@@ -157,8 +161,32 @@ class Solver {
         }
     }
 
-    static boolean collides(int[] a, int[] b) {
-        return a[0] == b[0] || a[1] == b[1] || Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
+    // Not collide constraint. Sudoku doesn't collide vertically, horizontally and in 3x3 blocks.
+    static class SudokuNotCollideConstraint extends Constraint {
+        HashMap<Integer, int[]> map;
+        HashMap<Integer, Integer> subnetMap;
+        public SudokuNotCollideConstraint(HashMap<Integer, int[]> map, HashMap<Integer, Integer> subnetMap) {
+            this.subnetMap = subnetMap;
+            this.map = map;
+        }
+
+        boolean sudokuCollides(int a, int b) {
+            return map.get(a)[0] == map.get(b)[0] || map.get(a)[1] == map.get(b)[1] || subnetMap.get(a).equals(subnetMap.get(b));
+        }
+
+        @Override
+        void infer(Variable[] variables) {
+            for (int i = 0; i < variables.length; i++) {
+                if (variables[i].domain.size() == 1) {
+                    int idx = i;
+                    for (int j = 0; j < variables.length; j++) {
+                        if (j != i && sudokuCollides(i, j)) {
+                            variables[j].domain.removeIf(value -> value.equals(variables[idx].domain.get(0)));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Variable[] variables;

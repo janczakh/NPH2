@@ -31,6 +31,7 @@ public class NQueens {
         // TODO: add your constraints
         constraints.add(new Solver.AscendingConstraint());
         constraints.add(new Solver.NotCollideConstraint(map));
+        constraints.add(new Solver.NotOtherConstraint());
 
         // Convert to arrays
         Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
@@ -42,6 +43,30 @@ public class NQueens {
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
 
+//        // Print an nxn board with coordinates from result marked on each solution
+//        for (int[] solution : result) {
+//            char[][] board = new char[n][n];
+//            for (int i = 0; i < n; i++) {
+//                Arrays.fill(board[i], '.');
+//            }
+//            for (int i = 0; i < n; i++) {
+//                int[] coord = map.get(solution[i]);
+//                board[coord[0]][coord[1]] = 'Q';
+//            }
+//            for (char[] row : board) {
+//                System.out.println(Arrays.toString(row));
+//            }
+//            System.out.println();
+//        }
+//        // Print the coordinates for each queen in each solution
+//        for (int[] solution : result) {
+//            for (int i = 0; i < n; i++) {
+//                int[] coord = map.get(solution[i]);
+//                System.out.print(Arrays.toString(coord));
+//                System.out.println(solution[i]);
+//            }
+//            System.out.println();
+//        }
         // TODO: use result to construct answer
         return result.size();
     }
