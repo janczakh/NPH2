@@ -127,7 +127,7 @@ class Solver {
                     int index = i;
                     for (int j = 0; j < variables.length; j++) {
                         if (j != i) {
-                            variables[j].domain.removeIf(value -> value.equals(variables[index].domain.getFirst()));
+                            variables[j].domain.removeIf(value -> value.equals(variables[index].domain.get(0)));
                         }
                     }
                 }
@@ -231,6 +231,17 @@ class Solver {
 
         //solution found
         if (curVarIndex == -1) {
+            Variable[] nextVariables = copy(variables);
+            for (Constraint constraint : constraints) {
+                constraint.infer(nextVariables);
+            }
+
+            //If conflict -> a variable has empty domain -> return
+            for (Variable v : nextVariables) {
+                if (v.domain.isEmpty()) {
+                    return;
+                };
+            }
             solutions.add(collapseSolution(variables));
             return;
         }

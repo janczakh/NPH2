@@ -16,6 +16,7 @@ class NQueensTest {
             int result = NQueens.getNQueenSolutions(n);
             long time = System.currentTimeMillis() - startMillis;
 
+
             assertEquals(solutions[n], result, "Expected " + solutions[n] + " but got " + result + " (n = " + n + ")");
 
             System.out.println(" passed in " + time + "ms");
