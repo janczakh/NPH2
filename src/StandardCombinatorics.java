@@ -179,7 +179,7 @@ public class StandardCombinatorics {
         }
 
         // TODO: add your constraints
-        constraints.add(new Solver.NotOtherConstraint());
+//        constraints.add(new Solver.NotOtherConstraint());
 
         // Convert to arrays
 //        Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
