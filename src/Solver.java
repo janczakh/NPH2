@@ -289,16 +289,5 @@ class Solver {
         }
         return ret;
     }
-
-
-    static class Node {
-        Variable[] variables;
-        int depth; //Represents which variable index should be considered now
-
-        public Node(Variable[] variables, int depth) {
-            this.variables = variables;
-            this.depth = depth;
-        }
-    }
 }
 

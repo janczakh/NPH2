@@ -12,15 +12,15 @@ public class NQueens {
         List<Solver.Constraint> constraints = new ArrayList<>();
 
         HashMap<Integer, int[]> map = new HashMap<>();
-        for (int i = 1; i <= n * n; i++) {
-            int row = (i - 1) / n;
-            int col = (i - 1) % n;
+        for (int i = 0; i < n * n; i++) {
+            int row = (i) / n;
+            int col = (i) % n;
             map.put(i, new int[]{row, col});
         }
 
         // TODO: add your variables
         ArrayList<Integer> domain = new ArrayList<>();
-        for (int i = 1; i <= n*n; i++) {
+        for (int i = 0; i < n*n; i++) {
             domain.add(i);
         }
 
