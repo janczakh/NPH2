@@ -34,12 +34,20 @@ public class NQueens {
 
         // TODO: add your variables
         ArrayList<Integer> domain = new ArrayList<>();
+        ArrayList<Integer> halfDomain = new ArrayList<>();
         for (int i = 0; i < n*n; i++) {
+            if (i < (n*n)/2) {
+                halfDomain.add(i);
+            }
             domain.add(i);
         }
 
         for (int i = 0; i < n; i++) {
-            variables.add(new Solver.Variable(domain));
+            if (n > 1 && i == 0) {
+                variables.add(new Solver.Variable(halfDomain));
+            } else {
+                variables.add(new Solver.Variable(domain));
+            }
         }
 
         // TODO: add your constraints
@@ -56,7 +64,10 @@ public class NQueens {
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
 
-        // Print an nxn board with coordinates from result marked on each solution
+        return result.size();
+    }
+}
+// Print an nxn board with coordinates from result marked on each solution
 //        System.out.println("\n");
 ////        for (int[] solution : List.of(result.get(10))) {
 //        for (int[] solution : result) {
@@ -83,11 +94,8 @@ public class NQueens {
 //            }
 //            System.out.println();
 //        }
-        // TODO: use result to construct answer
+// TODO: use result to construct answer
 //        for (int[] res : result) {
 //            System.out.println(Arrays.toString(res));
 //        }
 //        System.out.println(result);
-        return result.size();
-    }
-}
