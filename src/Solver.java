@@ -1,7 +1,5 @@
 import java.util.*;
 
-import static java.util.Collections.max;
-
 class Solver {
     static class Variable {
         List<Integer> domain;
@@ -22,26 +20,6 @@ class Solver {
         abstract void infer(Variable[] variables, Integer choice);
     }
 
-    // Example implementation of the Constraint interface.
-    static abstract class BetweenFiveAndTenConstraint {
-        Variable var;
-
-        public BetweenFiveAndTenConstraint(Variable var) {
-            this.var = var;
-        }
-
-        void infer() {
-            List<Integer> newDomain = new LinkedList<>();
-
-            for (Integer x : this.var.domain) {
-                if (5 < x && x < 10)
-                    newDomain.add(x);
-            }
-
-            this.var.domain = newDomain;
-        }
-    }
-
     // Ascending constraint. Every next variable is greater than the previous one.
     static class AscendingConstraint extends Constraint {
 
@@ -49,19 +27,35 @@ class Solver {
 
         @Override
         void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length - 1; i++) {
+            if (variables[choice].domain.isEmpty()) return;
+            for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int minPreviousValue = Collections.min(currentVar.domain);
-                nextVar.domain.removeIf(value -> value <= minPreviousValue);
+                ArrayList<Integer> remaining = new ArrayList<>();
+                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
+                    if (nextVar.domain.get(j) > currentVar.domain.get(0)) {
+                        remaining.add(nextVar.domain.get(j));
+                    } else {
+                        Collections.reverse(remaining);
+                        variables[i + 1].domain = remaining;
+                        break;
+                    }
+                }
             }
-            for (int i = variables.length - 1; i > 0; i--) {
+            for (int i = choice; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int maxNextValue = Collections.max(currentVar.domain);
-                nextVar.domain.removeIf(value -> value >= maxNextValue);
+                ArrayList<Integer> remaining = new ArrayList<>();
+                for (int j = 0; j < nextVar.domain.size() - 1; j++) {
+                    if (nextVar.domain.get(j) < currentVar.domain.get(currentVar.domain.size() - 1)) {
+                        remaining.add(nextVar.domain.get(j));
+                    } else {
+                        variables[i - 1].domain = remaining;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -74,19 +68,35 @@ class Solver {
 
         @Override
         void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length - 1; i++) {
+            if (variables[choice].domain.isEmpty()) return;
+            for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int minPreviousValue = Collections.min(currentVar.domain);
-                nextVar.domain.removeIf(value -> value < minPreviousValue);
+                ArrayList<Integer> remaining = new ArrayList<>();
+                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
+                    if (nextVar.domain.get(j) >= currentVar.domain.get(0)) {
+                        remaining.add(nextVar.domain.get(j));
+                    } else {
+                        Collections.reverse(remaining);
+                        variables[i + 1].domain = remaining;
+                        break;
+                    }
+                }
             }
-            for (int i = variables.length - 1; i > 0; i--) {
+            for (int i = choice; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int maxNextValue = Collections.max(currentVar.domain);
-                nextVar.domain.removeIf(value -> value > maxNextValue);
+                ArrayList<Integer> remaining = new ArrayList<>();
+                for (int j = 0; j < nextVar.domain.size() - 1; j++) {
+                    if (nextVar.domain.get(j) <= currentVar.domain.get(currentVar.domain.size() - 1)) {
+                        remaining.add(nextVar.domain.get(j));
+                    } else {
+                        variables[i - 1].domain = remaining;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -123,13 +133,9 @@ class Solver {
         @Override
         void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length - 1; i++) {
-                if (variables[i].domain.size() == 1) {
-                    int index = i;
-                    for (int j = 0; j < variables.length; j++) {
-                        if (j != i) {
-                            variables[j].domain.removeIf(value -> value.equals(variables[index].domain.get(0)));
-                        }
-                    }
+                if (i != choice) {
+                    int other = variables[choice].domain.get(0);
+                    variables[i].domain.removeIf(value -> value.equals(other));
                 }
             }
         }

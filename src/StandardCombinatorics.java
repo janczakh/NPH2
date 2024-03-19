@@ -53,9 +53,6 @@ public class StandardCombinatorics {
         // TODO: add your constraints
         constraints.add(new Solver.AscendingConstraint());
 
-        // Convert to arrays
-//        Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
-//        variablesArray = variables.toArray(variablesArray);
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
         constraintsArray = constraints.toArray(constraintsArray);
 
@@ -64,13 +61,6 @@ public class StandardCombinatorics {
         List<int[]> result = solver.findAllSolutions();
 
         // TODO: use result to construct answer
-        System.out.println("result:");
-//        for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-//        }
-        System.out.println("---");
-        // TODO: use result to construct answer
-//        return result.stream().map(Arrays::toString).map(x -> x.replaceAll("\\[|]|,|\\s", "")).collect(Collectors.toList());
         return result;
     }
 
@@ -95,9 +85,7 @@ public class StandardCombinatorics {
         // TODO: add your constraints
         constraints.add(new Solver.AscendingWithEqualConstraint());
 
-        // Convert to arrays
-//        Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
-//        variablesArray = variables.toArray(variablesArray);
+
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
         constraintsArray = constraints.toArray(constraintsArray);
 
@@ -106,13 +94,6 @@ public class StandardCombinatorics {
         List<int[]> result = solver.findAllSolutions();
 
         // TODO: use result to construct answer
-        System.out.println("result:");
-//        for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-//        }
-        System.out.println("---");
-        // TODO: use result to construct answer
-//        return result.stream().map(Arrays::toString).map(x -> x.replaceAll("\\[|]|,|\\s", "")).collect(Collectors.toList());
         return result;
     }
 
@@ -138,8 +119,6 @@ public class StandardCombinatorics {
         constraints.add(new Solver.AscendingExceptZeroConstraint());
 
         // Convert to arrays
-//        Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
-//        variablesArray = variables.toArray(variablesArray);
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
         constraintsArray = constraints.toArray(constraintsArray);
 
@@ -150,15 +129,7 @@ public class StandardCombinatorics {
         for (int[] res : result) {
             newResult.add(Arrays.stream(res).filter(x -> x != 0).toArray());
         }
-
         // TODO: use result to construct answer
-        System.out.println("result:");
-//        for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-//        }
-        System.out.println("---");
-        // TODO: use result to construct answer
-//        return result.stream().map(Arrays::toString).map(x -> x.replaceAll("\\[|]|,|\\s", "")).collect(Collectors.toList());
         return newResult;
     }
 
@@ -180,30 +151,16 @@ public class StandardCombinatorics {
         }
 
         // TODO: add your constraints
-//        constraints.add(new Solver.NotOtherConstraint());
+        constraints.add(new Solver.NotOtherConstraint());
 
-        // Convert to arrays
-//        Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
-//        variablesArray = variables.toArray(variablesArray);
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
         constraintsArray = constraints.toArray(constraintsArray);
 
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
-        List<int[]> newResult = new ArrayList<>();
-        for (int[] res : result) {
-            newResult.add(Arrays.stream(res).filter(x -> x != 0).toArray());
-        }
 
         // TODO: use result to construct answer
-        System.out.println("result:");
-//        for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-//        }
-        System.out.println("---");
-        // TODO: use result to construct answer
-//        return result.stream().map(Arrays::toString).map(x -> x.replaceAll("\\[|]|,|\\s", "")).collect(Collectors.toList());
-        return newResult;
+        return result;
     }
 }
