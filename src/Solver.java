@@ -163,28 +163,17 @@ class Solver {
 
     // Not collide constraint. Sudoku doesn't collide vertically, horizontally and in 3x3 blocks.
     static class SudokuNotCollideConstraint extends Constraint {
-        HashMap<Integer, int[]> map;
-        HashMap<Integer, Integer> subnetMap;
-        public SudokuNotCollideConstraint(HashMap<Integer, int[]> map, HashMap<Integer, Integer> subnetMap) {
-            this.subnetMap = subnetMap;
-            this.map = map;
-        }
-
-        boolean sudokuCollides(int a, int b) {
-            return map.get(a)[0] == map.get(b)[0] || map.get(a)[1] == map.get(b)[1] || subnetMap.get(a).equals(subnetMap.get(b));
+        HashMap<Integer, List<Integer>> collisions;
+        public SudokuNotCollideConstraint(HashMap<Integer, List<Integer>> collisions) {
+            this.collisions = collisions;
         }
 
         @Override
         void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length; i++) {
-                if (variables[i].domain.size() == 1) {
-                    int idx = i;
-                    for (int j = 0; j < variables.length; j++) {
-                        if (j != i && sudokuCollides(i, j)) {
-                            variables[j].domain.removeIf(value -> value.equals(variables[idx].domain.get(0)));
-                        }
-                    }
-                }
+            if (variables[choice].domain.isEmpty()) return;
+            for (int i : collisions.get(choice)) {
+                variables[i].domain.removeIf(value -> value.equals(variables[choice].domain.get(0)));
+                if (variables[i].domain.isEmpty()) return;
             }
         }
     }
