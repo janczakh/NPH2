@@ -6,6 +6,9 @@ public class NQueens {
     /**
      * Returns the number of N-Queen solutions
      */
+    static boolean collides(int[] a, int[] b) {
+        return a[0] == b[0] || a[1] == b[1] || Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
+    }
     public static int getNQueenSolutions(int n) {
         // Initialize lists for variables and constraints
         List<Solver.Variable> variables = new ArrayList<>();
@@ -16,6 +19,17 @@ public class NQueens {
             int row = (i) / n;
             int col = (i) % n;
             map.put(i, new int[]{row, col});
+        }
+
+        HashMap<List<Integer>, Boolean> collidesMap = new HashMap<>();
+        for (int i = 0; i < n * n; i++) {
+            for (int j = 0; j < n * n; j++) {
+                if (collides(map.get(i), map.get(j))) {
+                    collidesMap.put(List.of(i, j), true);
+                } else {
+                    collidesMap.put(List.of(i, j), false);
+                }
+            }
         }
 
         // TODO: add your variables
@@ -29,9 +43,9 @@ public class NQueens {
         }
 
         // TODO: add your constraints
+        constraints.add(new Solver.NotCollideConstraint(map, collidesMap));
         constraints.add(new Solver.AscendingConstraint());
-//        constraints.add(new Solver.NotOtherConstraint());
-        constraints.add(new Solver.NotCollideConstraint(map));
+
         // Convert to arrays
         Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
         variablesArray = variables.toArray(variablesArray);

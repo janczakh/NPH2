@@ -15,20 +15,21 @@ public class StandardCombinatorics {
         for (int i = 0; i < n; i++) {
             variablesArray[i] = new Solver.Variable(List.of(0,1));
         }
-//        variablesArray = variables.toArray(variablesArray);
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
-//        constraintsArray = constraints.toArray(constraintsArray);
 
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
-        System.out.println("result:");
-//        for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-//        }
-        System.out.println("---");
         // TODO: use result to construct answer
-        return result.stream().map(Arrays::toString).map(x -> x.replaceAll("\\[|]|,|\\s", "")).collect(Collectors.toList());
+        List<String> resultString = new ArrayList<>();
+        for (int[] res : result) {
+            StringBuilder sb = new StringBuilder();
+            for (int i : res) {
+                sb.append(i);
+            }
+            resultString.add(sb.toString());
+        }
+        return resultString;
     }
 
     /**

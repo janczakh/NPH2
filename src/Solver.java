@@ -19,7 +19,7 @@ class Solver {
         /**
          * Tries to reduce the domain of the variables associated to this constraint, using inference
          */
-        abstract void infer(Variable[] variables);
+        abstract void infer(Variable[] variables, Integer choice);
     }
 
     // Example implementation of the Constraint interface.
@@ -48,7 +48,7 @@ class Solver {
         public AscendingConstraint() {}
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
@@ -73,7 +73,7 @@ class Solver {
         public AscendingWithEqualConstraint() {}
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
@@ -97,7 +97,7 @@ class Solver {
         public AscendingExceptZeroConstraint() {}
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
@@ -121,7 +121,7 @@ class Solver {
         public NotOtherConstraint() {}
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length - 1; i++) {
                 if (variables[i].domain.size() == 1) {
                     int index = i;
@@ -138,24 +138,18 @@ class Solver {
     // Not collide constraint. Queens don't see each other vertically, horizontally and diagonally.
     static class NotCollideConstraint extends Constraint {
         HashMap<Integer, int[]> map;
-        public NotCollideConstraint(HashMap<Integer, int[]> map) {
+        HashMap<List<Integer>, Boolean> collidesMap;
+        public NotCollideConstraint(HashMap<Integer, int[]> map, HashMap<List<Integer>, Boolean> collidesMap) {
             this.map = map;
-        }
-
-        static boolean collides(int[] a, int[] b) {
-            return a[0] == b[0] || a[1] == b[1] || Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
+            this.collidesMap = collidesMap;
         }
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
+            if (variables[choice].domain.size() == 0) return;
             for (int i = 0; i < variables.length; i++) {
-                if (variables[i].domain.size() == 1) {
-                    int index = i;
-                    for (int j = 0; j < variables.length; j++) {
-                        if (j != i) {
-                            variables[j].domain.removeIf(value -> collides(map.get(variables[index].domain.get(0)), map.get(value)));
-                        }
-                    }
+                if (i != choice) {
+                    variables[i].domain.removeIf(value -> collidesMap.get(List.of(variables[choice].domain.get(0), value)));
                 }
             }
         }
@@ -175,7 +169,7 @@ class Solver {
         }
 
         @Override
-        void infer(Variable[] variables) {
+        void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length; i++) {
                 if (variables[i].domain.size() == 1) {
                     int idx = i;
@@ -233,7 +227,9 @@ class Solver {
         if (curVarIndex == -1) {
             Variable[] nextVariables = copy(variables);
             for (Constraint constraint : constraints) {
-                constraint.infer(nextVariables);
+                for (int i = 0; i < variables.length; i++) {
+                    constraint.infer(nextVariables, i);
+                }
             }
 
             //If conflict -> a variable has empty domain -> return
@@ -253,7 +249,7 @@ class Solver {
             //Collapse the domain of the variable to choice and infer from there
             nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
             for (Constraint constraint : constraints) {
-                constraint.infer(nextVariables);
+                constraint.infer(nextVariables, curVarIndex);
             }
 
             //If conflict -> a variable has empty domain -> return
