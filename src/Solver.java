@@ -220,6 +220,8 @@ class Solver {
     Variable[] variables;
     Constraint[] constraints;
     List<int[]> solutions;
+    int recursionLevel;
+    ArrayDeque<int[]> stack; //slightly faster than stack
     // you can add more attributes
 
     /**
@@ -232,6 +234,8 @@ class Solver {
         this.constraints = constraints;
 
         solutions = new LinkedList<>();
+        recursionLevel = 0;
+        stack = new ArrayDeque<>();
     }
 
     /**
@@ -259,45 +263,58 @@ class Solver {
 //        variables = new Variable[]{new Variable(List.of(0,1,2), 0), new Variable(List.of(0,1,2)), new Variable(List.of(0,1,2), 0)};
         //solution found
         if (curVarIndex == -1) {
-            Variable[] nextVariables = copy(variables);
+//            Variable[] nextVariables = copy(variables);
             for (Constraint constraint : constraints) {
                 for (int i = 0; i < variables.length; i++) {
-                    constraint.infer(nextVariables, i);
+                    constraint.infer(variables, i);
                 }
             }
 
             //If conflict -> a variable has empty domain -> return
-            for (Variable v : nextVariables) {
+            for (Variable v : variables) {
                 if (v.domain.isEmpty()) {
                     return;
                 };
             }
-            if (!verifyChoiceInDomain(nextVariables)) return;
+            if (!verifyChoiceInDomain(variables)) return;
             solutions.add(collapseSolution(variables));
             return;
         }
 
         Variable cur = variables[curVarIndex];
         for (Integer choice : cur.domain) {
-            Variable[] nextVariables = copy(variables);
-            nextVariables[curVarIndex].choice = choice;
+//            Variable[] nextVariables = copy(variables);
+            variables[curVarIndex].choice = choice;
             //Collapse the domain of the variable to choice and infer from there
 //            nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
             for (Constraint constraint : constraints) {
-                constraint.infer(nextVariables, curVarIndex);
+                constraint.infer(variables, curVarIndex);
             }
 
             //If conflict -> a variable has empty domain -> return
-            if (!verifyChoiceInDomain(nextVariables)) continue;
+            if (!verifyChoiceInDomain(variables)) continue;
             boolean skip = false;
-            for (Variable v : nextVariables) {
+            for (Variable v : variables) {
                 if (v.domain.isEmpty()) {
                     skip = true;
                     break;
                 };
             }
             if (skip) continue;
-            solve(findAllSolutions, nextVariables, constraints);
+            recursionLevel++;
+            solve(findAllSolutions, variables, constraints);
+            recursionLevel--;
+
+            //Restore from the stack
+            while (!stack.isEmpty()) {
+                int[] nxt = stack.pop();
+                if (nxt[2] >= recursionLevel) {
+                    variables[nxt[1]].domain.add(nxt[0]);
+                } else {
+                    stack.add(nxt);
+                    break;
+                }
+            }
         }
         cur.choice = null;
     }
