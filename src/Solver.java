@@ -41,7 +41,7 @@ class Solver {
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
                 for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
-                    if (nextVar.domain.get(j) > currentVar.domain.get(0)) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) > currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) > currentVar.domain.get(0)) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
                         Collections.reverse(remaining);
@@ -56,7 +56,7 @@ class Solver {
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
                 for (int j = 0; j < nextVar.domain.size() - 1; j++) {
-                    if (nextVar.domain.get(j) < currentVar.domain.get(currentVar.domain.size() - 1)) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) < currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) < currentVar.domain.get(currentVar.domain.size() - 1)) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
                         variables[i - 1].domain = remaining;
@@ -119,14 +119,14 @@ class Solver {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int minPreviousValue = Collections.min(currentVar.domain);
+                int minPreviousValue = currentVar.choice == null ? Collections.min(currentVar.domain) : currentVar.choice;
                 nextVar.domain.removeIf(value -> (value <= minPreviousValue && value != 0));
             }
             for (int i = variables.length - 1; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int maxNextValue = Collections.max(currentVar.domain);
+                int maxNextValue = currentVar.choice == null ? Collections.max(currentVar.domain) : currentVar.choice;
                 nextVar.domain.removeIf(value -> (value >= maxNextValue && value != 0));
             }
         }
