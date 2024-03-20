@@ -3,6 +3,7 @@ import java.util.*;
 class Solver {
     static class Variable {
         List<Integer> domain;
+        Integer choice;
 
         /**
          * Constructs a new variable.
@@ -10,6 +11,12 @@ class Solver {
          */
         public Variable(List<Integer> domain) {
             this.domain = domain;
+            this.choice = null;
+        }
+
+        public Variable(List<Integer> domain, Integer choice) {
+            this.domain = domain;
+            this.choice = choice;
         }
     }
 
@@ -75,7 +82,7 @@ class Solver {
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
                 for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
-                    if (nextVar.domain.get(j) >= currentVar.domain.get(0)) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) >= currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) >= currentVar.domain.get(0)) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
                         Collections.reverse(remaining);
@@ -90,7 +97,7 @@ class Solver {
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
                 for (int j = 0; j < nextVar.domain.size() - 1; j++) {
-                    if (nextVar.domain.get(j) <= currentVar.domain.get(currentVar.domain.size() - 1)) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) <= currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) <= currentVar.domain.get(currentVar.domain.size() - 1)) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
                         variables[i - 1].domain = remaining;
@@ -132,9 +139,10 @@ class Solver {
 
         @Override
         void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length - 1; i++) {
+            for (int i = 0; i < variables.length; i++) {
                 if (i != choice) {
-                    int other = variables[choice].domain.get(0);
+//                    int other = variables[choice].domain.get(0);
+                    int other = variables[choice].choice;
                     variables[i].domain.removeIf(value -> value.equals(other));
                 }
             }
@@ -177,7 +185,8 @@ class Solver {
         @Override
         void infer(Variable[] variables, Integer choice) {
             for (int i = 0; i < variables.length; i++) {
-                if (variables[i].domain.size() == 1) {
+//                if (variables[i].domain.size() == 1) { //TODO
+                if (variables[i].choice != null) { //TODO
                     int idx = i;
                     for (int j = 0; j < variables.length; j++) {
                         if (j != i && sudokuCollides(i, j)) {
@@ -251,9 +260,9 @@ class Solver {
         Variable cur = variables[curVarIndex];
         for (Integer choice : cur.domain) {
             Variable[] nextVariables = copy(variables);
-
+            nextVariables[curVarIndex].choice = choice;
             //Collapse the domain of the variable to choice and infer from there
-            nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
+//            nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
             for (Constraint constraint : constraints) {
                 constraint.infer(nextVariables, curVarIndex);
             }
@@ -269,12 +278,14 @@ class Solver {
             if (skip) continue;
             solve(findAllSolutions, nextVariables, constraints);
         }
+        cur.choice = null;
     }
 
 
     //Assuming all variables are of length 1, return an array of solutions
     int[] collapseSolution(Variable[] variables) {
-        return Arrays.stream(variables).mapToInt(x -> x.domain.get(0)).toArray();
+//        return Arrays.stream(variables).mapToInt(x -> x.domain.get(0)).toArray();
+        return Arrays.stream(variables).mapToInt(x -> x.choice).toArray();
     }
 
     /**
@@ -287,7 +298,7 @@ class Solver {
         int bestNumber = Integer.MAX_VALUE;
         for (int i = 0; i < variables.length; i++) {
             Variable v = variables[i];
-            if (v.domain.size() < bestNumber && v.domain.size() > 1) {
+            if (v.choice == null && v.domain.size() < bestNumber) {
                 best = i;
                 bestNumber = v.domain.size();
             }
@@ -298,7 +309,7 @@ class Solver {
     Variable[] copy(Variable[] variables) {
         Variable[] ret = new Variable[variables.length];
         for (int i = 0; i < ret.length; i++) {
-            ret[i] = new Variable(new ArrayList<>(variables[i].domain));
+            ret[i] = new Variable(new ArrayList<>(variables[i].domain), variables[i].choice);
         }
         return ret;
     }

@@ -93,6 +93,10 @@ public class StandardCombinatorics {
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
 
+//        for (int[] a : result) {
+//            System.out.println(Arrays.toString(a));
+//        }
+
         // TODO: use result to construct answer
         return result;
     }
@@ -159,6 +163,10 @@ public class StandardCombinatorics {
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
+
+//        for (int[] arr : result) {
+//            System.out.println(Arrays.toString(arr));
+//        }
 
         // TODO: use result to construct answer
         return result;

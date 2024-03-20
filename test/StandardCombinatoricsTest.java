@@ -117,7 +117,7 @@ class StandardCombinatoricsTest {
             int n = ns[t];
             int k = ks[t];
 
-            System.out.print("Running getCombinationsWithRepetition (n = " + n + ", k = " + k + ")...");
+            System.out.println("Running getCombinationsWithRepetition (n = " + n + ", k = " + k + ")...");
 
             long startMillis = System.currentTimeMillis();
             List<int[]> result = StandardCombinatorics.getCombinationsWithRepetition(n, k);
