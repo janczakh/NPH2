@@ -171,9 +171,21 @@ class Solver {
         @Override
         void infer(Variable[] variables, Integer choice) {
             if (variables[choice].domain.isEmpty()) return;
-            for (int i : collisions.get(choice)) {
-                variables[i].domain.removeIf(value -> value.equals(variables[choice].domain.get(0)));
-                if (variables[i].domain.isEmpty()) return;
+            Queue<Integer> queue = new LinkedList<>();
+            queue.add(choice);
+            ArrayList<Integer> checked = new ArrayList<>();
+            while (!queue.isEmpty()) {
+                int cur = queue.poll();
+                for (int i : collisions.get(cur)) {
+                    boolean wasSelected = variables[i].domain.size() == 1;
+                    variables[i].domain.removeIf(value -> value.equals(variables[cur].domain.get(0)));
+                    boolean isSelected = variables[i].domain.size() == 1;
+                    if (variables[i].domain.isEmpty()) return;
+                    if (!wasSelected && isSelected && !checked.contains(i)) {
+                        queue.add(i);
+                        checked.add(i);
+                    }
+                }
             }
         }
     }
