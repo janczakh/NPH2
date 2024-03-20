@@ -132,6 +132,25 @@ class Solver {
         }
     }
 
+//    @Override
+//    void infer(Variable[] variables, Integer choice) {
+//        for (int i = 0; i < variables.length - 1; i++) {
+//            Variable currentVar = variables[i];
+//            Variable nextVar = variables[i + 1];
+//            if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+//            int minPreviousValue = Collections.min(currentVar.domain);
+//            nextVar.domain.removeIf(value -> (value <= minPreviousValue && value != 0));
+//        }
+//        for (int i = variables.length - 1; i > 0; i--) {
+//            Variable currentVar = variables[i];
+//            Variable nextVar = variables[i - 1];
+//            if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+//            int maxNextValue = Collections.max(currentVar.domain);
+//            nextVar.domain.removeIf(value -> (value >= maxNextValue && value != 0));
+//        }
+//    }
+
+
     // Not equal to other constraint. Every next variable is greater than the previous one.
     static class NotOtherConstraint extends Constraint {
 
@@ -237,7 +256,7 @@ class Solver {
         int curVarIndex = findNextBestUndecided(variables);
 
         if (!findAllSolutions && !solutions.isEmpty()) return;
-
+//        variables = new Variable[]{new Variable(List.of(0,1,2), 0), new Variable(List.of(0,1,2)), new Variable(List.of(0,1,2), 0)};
         //solution found
         if (curVarIndex == -1) {
             Variable[] nextVariables = copy(variables);
@@ -253,6 +272,7 @@ class Solver {
                     return;
                 };
             }
+            if (!verifyChoiceInDomain(nextVariables)) return;
             solutions.add(collapseSolution(variables));
             return;
         }
@@ -268,6 +288,7 @@ class Solver {
             }
 
             //If conflict -> a variable has empty domain -> return
+            if (!verifyChoiceInDomain(nextVariables)) continue;
             boolean skip = false;
             for (Variable v : nextVariables) {
                 if (v.domain.isEmpty()) {
@@ -286,6 +307,13 @@ class Solver {
     int[] collapseSolution(Variable[] variables) {
 //        return Arrays.stream(variables).mapToInt(x -> x.domain.get(0)).toArray();
         return Arrays.stream(variables).mapToInt(x -> x.choice).toArray();
+    }
+
+    boolean verifyChoiceInDomain(Variable[] variables) {
+        for (Variable v : variables) {
+            if (v.choice != null && !v.domain.contains(v.choice)) return false;
+        }
+        return true;
     }
 
     /**

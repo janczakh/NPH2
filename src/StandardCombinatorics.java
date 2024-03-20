@@ -131,7 +131,7 @@ public class StandardCombinatorics {
         List<int[]> result = solver.findAllSolutions();
         List<int[]> newResult = new ArrayList<>();
         for (int[] res : result) {
-            System.out.println(Arrays.toString(res));
+//            System.out.println(Arrays.toString(res));
             newResult.add(Arrays.stream(res).filter(x -> x != 0).toArray());
         }
         // TODO: use result to construct answer
