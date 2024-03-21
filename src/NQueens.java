@@ -33,26 +33,17 @@ public class NQueens {
         }
 
         // TODO: add your variables
-        ArrayList<Integer> domain = new ArrayList<>();
-        ArrayList<Integer> halfDomain = new ArrayList<>();
-        for (int i = 0; i < n*n; i++) {
-            if (i < (n*n)/2) {
-                halfDomain.add(i);
-            }
-            domain.add(i);
-        }
-
         for (int i = 0; i < n; i++) {
-            if (n > 1 && i == 0) {
-                variables.add(new Solver.Variable(halfDomain));
-            } else {
-                variables.add(new Solver.Variable(domain));
+            ArrayList<Integer> domain = new ArrayList<>();
+            for (int j = i * n; j < (i * n) + n; j++) {
+                domain.add(j);
             }
+            variables.add(new Solver.Variable(domain));
         }
 
         // TODO: add your constraints
         constraints.add(new Solver.NotCollideConstraint(map, collidesMap));
-        constraints.add(new Solver.AscendingConstraint());
+//        constraints.add(new Solver.AscendingConstraint());
 
         // Convert to arrays
         Solver.Variable[] variablesArray = new Solver.Variable[variables.size()];
