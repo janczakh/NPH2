@@ -57,9 +57,16 @@ class Solver {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                if (nextVar.choice != null) continue;
                 List<Integer> removed = new ArrayList<>();
                 ArrayList<Integer> remaining = new ArrayList<>();
-                int min = Collections.min(currentVar.domain);
+                int min;
+                if (currentVar.choice != null) {
+                    min = currentVar.choice;
+                } else {
+                    min = Collections.min(currentVar.domain);
+                }
+//                int min = Math.min(currentVar.choice, Collections.min(currentVar.domain));
                 //THIS IS DEPENDENT ON SORTING SOMEHOW? BUT NO BREAK STATEMENT
                 for (int j = 0; j < nextVar.domain.size(); j++) {
                     if (currentVar.choice != null && nextVar.domain.get(j) > currentVar.choice
@@ -70,9 +77,6 @@ class Solver {
                     }
                 }
                 variables[i + 1].domain = remaining;
-//                for (int val : removed) {
-//                    stack.push(new int[]{val, i+1, recursionLevel});
-//                }
                 stack.push(new StackItem(removed, recursionLevel, i+1));
 
             }
@@ -85,7 +89,7 @@ class Solver {
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
                 List<Integer> removed = new ArrayList<>();
-//                if ((nextVar.domain.size() - 1) == 0) return;
+                if (nextVar.choice != null) continue;
                 int max = Collections.max(currentVar.domain);
                 for (int j = 0; j < nextVar.domain.size(); j++) {
                     if (currentVar.choice != null && nextVar.domain.get(j) < currentVar.choice
@@ -214,6 +218,7 @@ class Solver {
             if (variables[choice].domain.size() == 0) return;
             for (int i = 0; i < variables.length; i++) {
                 if (i != choice) {
+                    if (variables[i].choice != null) continue; //This line 3x's the solution xd
                     List<Integer> removed = new ArrayList<>();
                     List<Integer> remaining = new ArrayList<>();
                     for (int val : variables[i].domain) {
