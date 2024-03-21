@@ -20,24 +20,38 @@ class Solver {
         }
     }
 
+    //When multiple items are removed from a variable, this object allows us to avoid adding and popping a lot of times
+    static class StackItem {
+        List<Integer> items;
+        int recursionLevel;
+        int varIndex;
+
+        public StackItem(List<Integer> items, int recursionLevel, int varIndex) {
+            this.items = items;
+            this.recursionLevel = recursionLevel;
+            this.varIndex = varIndex;
+        }
+    }
+
     static abstract class Constraint {
         /**
          * Tries to reduce the domain of the variables associated to this constraint, using inference
          */
-        abstract void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack);
+        abstract void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack);
         abstract void infer(Variable[] variables, Integer choice);
     }
 
     // Ascending constraint. Every next variable is greater than the previous one.
     static class AscendingConstraint extends Constraint {
-
+        int counter = 0;
         public AscendingConstraint() {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {}
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
+            counter++;
             if (variables[choice].domain.isEmpty()) return;
             for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
@@ -46,7 +60,6 @@ class Solver {
                 List<Integer> removed = new ArrayList<>();
                 ArrayList<Integer> remaining = new ArrayList<>();
                 int min = Collections.min(currentVar.domain);
-//                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
                 //THIS IS DEPENDENT ON SORTING SOMEHOW? BUT NO BREAK STATEMENT
                 for (int j = 0; j < nextVar.domain.size(); j++) {
                     if (currentVar.choice != null && nextVar.domain.get(j) > currentVar.choice
@@ -57,9 +70,10 @@ class Solver {
                     }
                 }
                 variables[i + 1].domain = remaining;
-                for (int val : removed) {
-                    stack.push(new int[]{val, i+1, recursionLevel});
-                }
+//                for (int val : removed) {
+//                    stack.push(new int[]{val, i+1, recursionLevel});
+//                }
+                stack.push(new StackItem(removed, recursionLevel, i+1));
 
             }
 
@@ -83,9 +97,10 @@ class Solver {
                     }
                 }
                 variables[i - 1].domain = remaining;
-                for (int val : removed) {
-                    stack.push(new int[]{val, i - 1, recursionLevel});
-                }
+//                for (int val : removed) {
+//                    stack.push(new int[]{val, i - 1, recursionLevel});
+//                }
+                stack.push(new StackItem(removed, recursionLevel, i-1));
 
             }
         }
@@ -98,7 +113,7 @@ class Solver {
         public AscendingWithEqualConstraint() {}
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -140,7 +155,7 @@ class Solver {
 
         public AscendingExceptZeroConstraint() {}
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -168,7 +183,7 @@ class Solver {
         public NotOtherConstraint() {}
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -192,14 +207,25 @@ class Solver {
         }
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
+        void infer(Variable[] variables, Integer choice) {}
 
         @Override
-        void infer(Variable[] variables, Integer choice) {
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
             if (variables[choice].domain.size() == 0) return;
             for (int i = 0; i < variables.length; i++) {
                 if (i != choice) {
-                    variables[i].domain.removeIf(value -> collidesMap.get(List.of(variables[choice].domain.get(0), value)));
+                    List<Integer> removed = new ArrayList<>();
+                    List<Integer> remaining = new ArrayList<>();
+                    for (int val : variables[i].domain) {
+                        if (collidesMap.get(List.of(variables[choice].choice, val))) {
+                            removed.add(val);
+                        } else {
+                            remaining.add(val);
+                        }
+                    }
+                    variables[i].domain = remaining;
+                    stack.push(new StackItem(removed, recursionLevel, i));
+//                    variables[i].domain.removeIf(value -> collidesMap.get(List.of(variables[choice].domain.get(0), value)));
                 }
             }
         }
@@ -219,7 +245,7 @@ class Solver {
         }
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -241,7 +267,7 @@ class Solver {
     Constraint[] constraints;
     List<int[]> solutions;
     int recursionLevel;
-    ArrayDeque<int[]> stack; //slightly faster than stack
+    ArrayDeque<StackItem> stack; //slightly faster than stack
     // you can add more attributes
 
     /**
@@ -324,9 +350,9 @@ class Solver {
 
             //Restore from the stack up to the current recursion layer
             while (!stack.isEmpty()) {
-                int[] nxt = stack.pop();
-                if (nxt[2] >= recursionLevel) {
-                    variables[nxt[1]].domain.add(nxt[0]);
+                StackItem nxt = stack.pop();
+                if (nxt.recursionLevel >= recursionLevel) {
+                    variables[nxt.varIndex].domain.addAll(nxt.items);
                 } else {
                     stack.push(nxt);
                     break;

@@ -51,7 +51,8 @@ public class StandardCombinatorics {
         }
 
         // TODO: add your constraints
-        constraints.add(new Solver.AscendingConstraint());
+        Solver.AscendingConstraint c = new Solver.AscendingConstraint();
+        constraints.add(c);
 
         Solver.Constraint[] constraintsArray = new Solver.Constraint[constraints.size()];
         constraintsArray = constraints.toArray(constraintsArray);
@@ -59,6 +60,7 @@ public class StandardCombinatorics {
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
+        System.out.println(c.counter);
 
 //                for (int[] a : result) {
 //            System.out.println(Arrays.toString(a));
@@ -96,6 +98,7 @@ public class StandardCombinatorics {
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
+//        System.out.println();
 
 //        for (int[] a : result) {
 //            System.out.println(Arrays.toString(a));
