@@ -47,7 +47,7 @@ public class StandardCombinatorics {
             domain.add(i);
         }
         for (int i = 0; i < k; i++) {
-            variablesArray[i] = new Solver.Variable(domain);
+            variablesArray[i] = new Solver.Variable(new ArrayList<>(domain));
         }
 
         // TODO: add your constraints
@@ -59,6 +59,10 @@ public class StandardCombinatorics {
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
+
+//                for (int[] a : result) {
+//            System.out.println(Arrays.toString(a));
+//        }
 
         // TODO: use result to construct answer
         return result;

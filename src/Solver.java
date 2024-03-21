@@ -24,6 +24,7 @@ class Solver {
         /**
          * Tries to reduce the domain of the variables associated to this constraint, using inference
          */
+        abstract void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack);
         abstract void infer(Variable[] variables, Integer choice);
     }
 
@@ -33,36 +34,59 @@ class Solver {
         public AscendingConstraint() {}
 
         @Override
-        void infer(Variable[] variables, Integer choice) {
+        void infer(Variable[] variables, Integer choice) {}
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {
             if (variables[choice].domain.isEmpty()) return;
             for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                List<Integer> removed = new ArrayList<>();
                 ArrayList<Integer> remaining = new ArrayList<>();
-                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
-                    if (currentVar.choice != null && nextVar.domain.get(j) > currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) > currentVar.domain.get(0)) {
+                int min = Collections.min(currentVar.domain);
+//                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
+                //THIS IS DEPENDENT ON SORTING SOMEHOW? BUT NO BREAK STATEMENT
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) > currentVar.choice
+                            || currentVar.choice == null && nextVar.domain.get(j) > min) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
-                        Collections.reverse(remaining);
-                        variables[i + 1].domain = remaining;
-                        break;
+                        removed.add(nextVar.domain.get(j));
                     }
                 }
+                variables[i + 1].domain = remaining;
+                for (int val : removed) {
+                    stack.push(new int[]{val, i+1, recursionLevel});
+                }
+
             }
+
+            //DOING TWO APPROACHES. ON TOP SORTING, WHICH IS BAD. ON THE BOTTOM THE SAME BUT SORTING-AMBIVALENT. FINISH.
+            //ALSO, IF SORTING-AMBIVALENT -> LINE 50 AND LINE 74 DON'T USE MAX BUT INDEX, ALSO SOLVE.
             for (int i = choice; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
-                for (int j = 0; j < nextVar.domain.size() - 1; j++) {
-                    if (currentVar.choice != null && nextVar.domain.get(j) < currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) < currentVar.domain.get(currentVar.domain.size() - 1)) {
+                List<Integer> removed = new ArrayList<>();
+//                if ((nextVar.domain.size() - 1) == 0) return;
+                int max = Collections.max(currentVar.domain);
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) < currentVar.choice
+                            || currentVar.choice == null && nextVar.domain.get(j) < max) {
                         remaining.add(nextVar.domain.get(j));
-                    } else {
-                        variables[i - 1].domain = remaining;
-                        break;
+                    }
+                    else {
+                        removed.add(nextVar.domain.get(j));
                     }
                 }
+                variables[i - 1].domain = remaining;
+                for (int val : removed) {
+                    stack.push(new int[]{val, i - 1, recursionLevel});
+                }
+
             }
         }
     }
@@ -72,6 +96,9 @@ class Solver {
     static class AscendingWithEqualConstraint extends Constraint {
 
         public AscendingWithEqualConstraint() {}
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -112,6 +139,8 @@ class Solver {
     static class AscendingExceptZeroConstraint extends Constraint {
 
         public AscendingExceptZeroConstraint() {}
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -132,29 +161,14 @@ class Solver {
         }
     }
 
-//    @Override
-//    void infer(Variable[] variables, Integer choice) {
-//        for (int i = 0; i < variables.length - 1; i++) {
-//            Variable currentVar = variables[i];
-//            Variable nextVar = variables[i + 1];
-//            if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-//            int minPreviousValue = Collections.min(currentVar.domain);
-//            nextVar.domain.removeIf(value -> (value <= minPreviousValue && value != 0));
-//        }
-//        for (int i = variables.length - 1; i > 0; i--) {
-//            Variable currentVar = variables[i];
-//            Variable nextVar = variables[i - 1];
-//            if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-//            int maxNextValue = Collections.max(currentVar.domain);
-//            nextVar.domain.removeIf(value -> (value >= maxNextValue && value != 0));
-//        }
-//    }
-
 
     // Not equal to other constraint. Every next variable is greater than the previous one.
     static class NotOtherConstraint extends Constraint {
 
         public NotOtherConstraint() {}
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -176,6 +190,9 @@ class Solver {
             this.map = map;
             this.collidesMap = collidesMap;
         }
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -200,6 +217,9 @@ class Solver {
         boolean sudokuCollides(int a, int b) {
             return map.get(a)[0] == map.get(b)[0] || map.get(a)[1] == map.get(b)[1] || subnetMap.get(a).equals(subnetMap.get(b));
         }
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<int[]> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
@@ -263,10 +283,9 @@ class Solver {
 //        variables = new Variable[]{new Variable(List.of(0,1,2), 0), new Variable(List.of(0,1,2)), new Variable(List.of(0,1,2), 0)};
         //solution found
         if (curVarIndex == -1) {
-//            Variable[] nextVariables = copy(variables);
             for (Constraint constraint : constraints) {
                 for (int i = 0; i < variables.length; i++) {
-                    constraint.infer(variables, i);
+                    constraint.infer(variables, i, recursionLevel, stack);
                 }
             }
 
@@ -282,17 +301,14 @@ class Solver {
         }
 
         Variable cur = variables[curVarIndex];
-        for (Integer choice : cur.domain) {
-//            Variable[] nextVariables = copy(variables);
+        for (Integer choice : new ArrayList<>(cur.domain)) {
             variables[curVarIndex].choice = choice;
             //Collapse the domain of the variable to choice and infer from there
-//            nextVariables[curVarIndex].domain = new ArrayList<>(Collections.singletonList(choice));
             for (Constraint constraint : constraints) {
-                constraint.infer(variables, curVarIndex);
+                constraint.infer(variables, curVarIndex, recursionLevel, stack);
             }
 
             //If conflict -> a variable has empty domain -> return
-            if (!verifyChoiceInDomain(variables)) continue;
             boolean skip = false;
             for (Variable v : variables) {
                 if (v.domain.isEmpty()) {
@@ -300,18 +316,19 @@ class Solver {
                     break;
                 };
             }
-            if (skip) continue;
-            recursionLevel++;
-            solve(findAllSolutions, variables, constraints);
-            recursionLevel--;
+            if (!skip && verifyChoiceInDomain(variables)) {
+                recursionLevel++;
+                solve(findAllSolutions, variables, constraints);
+                recursionLevel--;
+            }
 
-            //Restore from the stack
+            //Restore from the stack up to the current recursion layer
             while (!stack.isEmpty()) {
                 int[] nxt = stack.pop();
                 if (nxt[2] >= recursionLevel) {
                     variables[nxt[1]].domain.add(nxt[0]);
                 } else {
-                    stack.add(nxt);
+                    stack.push(nxt);
                     break;
                 }
             }
