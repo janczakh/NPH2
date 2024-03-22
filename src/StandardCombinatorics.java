@@ -60,11 +60,6 @@ public class StandardCombinatorics {
         // Use solver
         Solver solver = new Solver(variablesArray, constraintsArray);
         List<int[]> result = solver.findAllSolutions();
-        System.out.println(c.counter);
-
-//                for (int[] a : result) {
-//            System.out.println(Arrays.toString(a));
-//        }
 
         // TODO: use result to construct answer
         return result;
@@ -138,8 +133,8 @@ public class StandardCombinatorics {
         List<int[]> result = solver.findAllSolutions();
         List<int[]> newResult = new ArrayList<>();
         for (int[] res : result) {
-//            System.out.println(Arrays.toString(res));
-            newResult.add(Arrays.stream(res).filter(x -> x != 0).toArray());
+            int[] r = Arrays.stream(res).filter(x -> x != 0).toArray();
+            newResult.add(r);
         }
         // TODO: use result to construct answer
         return newResult;

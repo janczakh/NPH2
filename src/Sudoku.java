@@ -1,6 +1,10 @@
 import java.util.*;
 
 public class Sudoku {
+
+    static boolean sudokuCollides(int a, int b, HashMap<Integer, int[]> map, HashMap<Integer, Integer> subnetMap) {
+        return map.get(a)[0] == map.get(b)[0] || map.get(a)[1] == map.get(b)[1] || subnetMap.get(a).equals(subnetMap.get(b));
+    }
     /**
      * Returns the filled in sudoku grid.
      *
@@ -14,6 +18,7 @@ public class Sudoku {
 
         HashMap<Integer, int[]> map = new HashMap<>();
         HashMap<Integer, Integer> subnetMap = new HashMap<>();
+        HashMap<Integer, List<Integer>> collisions = new HashMap<>();
         int n = (int) Math.sqrt(grid.length);
         for (int i = 0; i < grid.length * grid.length; i++) {
             int row = (i) / grid.length;
@@ -21,6 +26,17 @@ public class Sudoku {
             int subnet = ((row / n) * n + (col / n)); // Calculate subnet for 3x3 grid
             map.put(i, new int[]{row, col});
             subnetMap.put(i, subnet);
+        }
+
+        for (int i = 0; i < grid.length * grid.length; i++) {
+            for (int j = 0; j < grid.length * grid.length; j++) {
+                if (!collisions.containsKey(i)) {
+                    collisions.put(i, new ArrayList<>());
+                }
+                if (i != j && sudokuCollides(i, j, map, subnetMap)) {
+                    collisions.get(i).add(j);
+                }
+            }
         }
 
         // TODO: add your variables
@@ -38,7 +54,7 @@ public class Sudoku {
         }
 
         // TODO: add your constraints
-        constraints.add(new Solver.SudokuNotCollideConstraint(map, subnetMap));
+        constraints.add(new Solver.SudokuNotCollideConstraint(collisions));
 
 
         // Convert to arrays
@@ -55,7 +71,13 @@ public class Sudoku {
         for (int i = 0; i < result.length; i++) {
             result2D[map.get(i)[0]][map.get(i)[1]] = result[i];
         }
-
+        //Print result
+//        for (int i = 0; i < result2D.length; i++) {
+//            for (int j = 0; j < result2D[0].length; j++) {
+//                System.out.print(result2D[i][j] + " ");
+//            }
+//            System.out.println();
+//        }
         // TODO: use result to construct answer
         return result2D;
     }

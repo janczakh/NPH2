@@ -117,65 +117,131 @@ class Solver {
         public AscendingWithEqualConstraint() {}
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
+        void infer(Variable[] variables, Integer choice) {}
 
         @Override
-        void infer(Variable[] variables, Integer choice) {
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
             if (variables[choice].domain.isEmpty()) return;
             for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
+                if (nextVar.choice != null) continue;
+                List<Integer> removed = new ArrayList<>();
                 ArrayList<Integer> remaining = new ArrayList<>();
-                for (int j = nextVar.domain.size() - 1; j >= 0; j--) {
-                    if (currentVar.choice != null && nextVar.domain.get(j) >= currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) >= currentVar.domain.get(0)) {
+                int min;
+                if (currentVar.choice != null) {
+                    min = currentVar.choice;
+                } else {
+                    min = Collections.min(currentVar.domain);
+                }
+//                int min = Math.min(currentVar.choice, Collections.min(currentVar.domain));
+                //THIS IS DEPENDENT ON SORTING SOMEHOW? BUT NO BREAK STATEMENT
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && nextVar.domain.get(j) >= currentVar.choice
+                            || currentVar.choice == null && nextVar.domain.get(j) >= min) {
                         remaining.add(nextVar.domain.get(j));
                     } else {
-                        Collections.reverse(remaining);
-                        variables[i + 1].domain = remaining;
-                        break;
+                        removed.add(nextVar.domain.get(j));
                     }
                 }
+                variables[i + 1].domain = remaining;
+                stack.push(new StackItem(removed, recursionLevel, i+1));
+
             }
+
+            //DOING TWO APPROACHES. ON TOP SORTING, WHICH IS BAD. ON THE BOTTOM THE SAME BUT SORTING-AMBIVALENT. FINISH.
+            //ALSO, IF SORTING-AMBIVALENT -> LINE 50 AND LINE 74 DON'T USE MAX BUT INDEX, ALSO SOLVE.
             for (int i = choice; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
                 ArrayList<Integer> remaining = new ArrayList<>();
-                for (int j = 0; j < nextVar.domain.size() - 1; j++) {
-                    if (currentVar.choice != null && nextVar.domain.get(j) <= currentVar.choice || currentVar.choice == null && nextVar.domain.get(j) <= currentVar.domain.get(currentVar.domain.size() - 1)) {
+                List<Integer> removed = new ArrayList<>();
+                if (nextVar.choice != null) continue;
+                int max = Collections.max(currentVar.domain);
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && (nextVar.domain.get(j) <= currentVar.choice
+                            || nextVar.domain.get(j) <= max)) {
                         remaining.add(nextVar.domain.get(j));
-                    } else {
-                        variables[i - 1].domain = remaining;
-                        break;
+                    }
+                    else {
+                        removed.add(nextVar.domain.get(j));
                     }
                 }
+                variables[i - 1].domain = remaining;
+//                for (int val : removed) {
+//                    stack.push(new int[]{val, i - 1, recursionLevel});
+//                }
+                stack.push(new StackItem(removed, recursionLevel, i-1));
+
             }
         }
+
     }
 
     // Ascending except 0 constraint. Every next variable is greater than the previous one.
     static class AscendingExceptZeroConstraint extends Constraint {
 
         public AscendingExceptZeroConstraint() {}
-        @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
-        void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length - 1; i++) {
+        void infer(Variable[] variables, Integer choice) {}
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
+            if (variables[choice].domain.isEmpty()) return;
+            for (int i = choice; i < variables.length - 1; i++) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i + 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int minPreviousValue = currentVar.choice == null ? Collections.min(currentVar.domain) : currentVar.choice;
-                nextVar.domain.removeIf(value -> (value <= minPreviousValue && value != 0));
+                if (nextVar.choice != null) continue;
+                List<Integer> removed = new ArrayList<>();
+                ArrayList<Integer> remaining = new ArrayList<>();
+                int min;
+                if (currentVar.choice != null) {
+                    min = currentVar.choice;
+                } else {
+                    min = Collections.min(currentVar.domain);
+                }
+//                int min = Math.min(currentVar.choice, Collections.min(currentVar.domain));
+                //THIS IS DEPENDENT ON SORTING SOMEHOW? BUT NO BREAK STATEMENT
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && (currentVar.choice == 0 && nextVar.domain.get(j) == 0 || nextVar.domain.get(j) > currentVar.choice)
+                            || currentVar.choice == null && (nextVar.domain.get(j) == 0 || nextVar.domain.get(j) > min)) {
+                        remaining.add(nextVar.domain.get(j));
+                    } else {
+                        removed.add(nextVar.domain.get(j));
+                    }
+                }
+                variables[i + 1].domain = remaining;
+                stack.push(new StackItem(removed, recursionLevel, i+1));
+
             }
-            for (int i = variables.length - 1; i > 0; i--) {
+
+            //DOING TWO APPROACHES. ON TOP SORTING, WHICH IS BAD. ON THE BOTTOM THE SAME BUT SORTING-AMBIVALENT. FINISH.
+            //ALSO, IF SORTING-AMBIVALENT -> LINE 50 AND LINE 74 DON'T USE MAX BUT INDEX, ALSO SOLVE.
+            for (int i = choice; i > 0; i--) {
                 Variable currentVar = variables[i];
                 Variable nextVar = variables[i - 1];
                 if (nextVar.domain.isEmpty() || currentVar.domain.isEmpty()) return;
-                int maxNextValue = currentVar.choice == null ? Collections.max(currentVar.domain) : currentVar.choice;
-                nextVar.domain.removeIf(value -> (value >= maxNextValue && value != 0));
+                ArrayList<Integer> remaining = new ArrayList<>();
+                List<Integer> removed = new ArrayList<>();
+                if (nextVar.choice != null) continue;
+                int max = Collections.max(currentVar.domain);
+                for (int j = 0; j < nextVar.domain.size(); j++) {
+                    if (currentVar.choice != null && (currentVar.choice == 0 && nextVar.domain.get(j) == 0 || nextVar.domain.get(j) < currentVar.choice)
+                            || currentVar.choice == null && (nextVar.domain.get(j) == 0 || nextVar.domain.get(j) < max)) {
+                        remaining.add(nextVar.domain.get(j));
+                    }
+                    else {
+                        removed.add(nextVar.domain.get(j));
+                    }
+                }
+                variables[i - 1].domain = remaining;
+
+                stack.push(new StackItem(removed, recursionLevel, i-1));
+
             }
         }
     }
@@ -187,15 +253,31 @@ class Solver {
         public NotOtherConstraint() {}
 
         @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
+        void infer(Variable[] variables, Integer choice) {}
 
         @Override
-        void infer(Variable[] variables, Integer choice) {
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
+            Variable currentVar = variables[choice];
+            if (currentVar.domain.isEmpty()) return;
+            int other = variables[choice].choice;
             for (int i = 0; i < variables.length; i++) {
                 if (i != choice) {
 //                    int other = variables[choice].domain.get(0);
-                    int other = variables[choice].choice;
-                    variables[i].domain.removeIf(value -> value.equals(other));
+                    Variable nextVar = variables[i];
+                    if (nextVar.domain.isEmpty()) return;
+                    ArrayList<Integer> remaining = new ArrayList<>();
+                    List<Integer> removed = new ArrayList<>();
+                    for (int j = 0; j < nextVar.domain.size(); j++) {
+                        if (other != nextVar.domain.get(j)) {
+                            remaining.add(nextVar.domain.get(j));
+                        }
+                        else {
+                            removed.add(nextVar.domain.get(j));
+                        }
+                    }
+                    nextVar.domain = remaining;
+
+                    stack.push(new StackItem(removed, recursionLevel, i));
                 }
             }
         }
@@ -236,32 +318,44 @@ class Solver {
         }
     }
 
-    // Not collide constraint. Sudoku doesn't collide vertically, horizontally and in 3x3 blocks.
     static class SudokuNotCollideConstraint extends Constraint {
-        HashMap<Integer, int[]> map;
-        HashMap<Integer, Integer> subnetMap;
-        public SudokuNotCollideConstraint(HashMap<Integer, int[]> map, HashMap<Integer, Integer> subnetMap) {
-            this.subnetMap = subnetMap;
-            this.map = map;
-        }
+        HashMap<Integer, List<Integer>> collisions;
 
-        boolean sudokuCollides(int a, int b) {
-            return map.get(a)[0] == map.get(b)[0] || map.get(a)[1] == map.get(b)[1] || subnetMap.get(a).equals(subnetMap.get(b));
+        public SudokuNotCollideConstraint(HashMap<Integer, List<Integer>> collisions) {
+            this.collisions = collisions;
         }
-
-        @Override
-        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {}
 
         @Override
         void infer(Variable[] variables, Integer choice) {
-            for (int i = 0; i < variables.length; i++) {
-//                if (variables[i].domain.size() == 1) { //TODO
-                if (variables[i].choice != null) { //TODO
-                    int idx = i;
-                    for (int j = 0; j < variables.length; j++) {
-                        if (j != i && sudokuCollides(i, j)) {
-                            variables[j].domain.removeIf(value -> value.equals(variables[idx].domain.get(0)));
+        }
+
+        @Override
+        void infer(Variable[] variables, Integer choice, int recursionLevel, ArrayDeque<StackItem> stack) {
+            if (variables[choice].domain.isEmpty()) return;
+            Queue<Integer> queue = new LinkedList<>();
+            queue.add(choice);
+            ArrayList<Integer> checked = new ArrayList<>();
+            while (!queue.isEmpty()) {
+                int cur = queue.poll();
+                for (int i : collisions.get(cur)) {
+                    if (variables[i].choice != null) continue; //This line 3x's the solution xd
+                    boolean wasSelected = variables[i].choice != null;
+                    List<Integer> removed = new ArrayList<>();
+                    List<Integer> remaining = new ArrayList<>();
+                    for (int val : variables[i].domain) {
+                        if (variables[cur].choice != null && variables[cur].choice == val) {
+                            removed.add(val);
+                        } else {
+                            remaining.add(val);
                         }
+                    }
+                    variables[i].domain = remaining;
+                    stack.push(new StackItem(removed, recursionLevel, i));
+                    boolean isSelected = variables[i].choice != null;
+                    if (variables[i].domain.isEmpty()) return;
+                    if (!wasSelected && isSelected && !checked.contains(i)) {
+                        queue.add(i);
+                        checked.add(i);
                     }
                 }
             }
